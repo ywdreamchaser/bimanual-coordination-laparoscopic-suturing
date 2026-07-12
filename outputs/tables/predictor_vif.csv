@@ -1,0 +1,5 @@
+predictor,r2_from_other_predictors,vif
+training_mean_lt_rn_duration_s,0.3851052861700127,1.6262946769721145
+training_mean_lt_rn_count,0.3870070426876394,1.6313401125919194
+training_mean_rt_ln_duration_s,0.9718252476468658,35.4927698198121
+training_mean_rt_ln_count,0.9716587415593915,35.28424830166181

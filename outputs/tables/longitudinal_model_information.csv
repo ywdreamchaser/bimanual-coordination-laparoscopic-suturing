@@ -1,0 +1,9 @@
+Stage,Metric,Observations,Participants,Random-intercept variance,Residual variance,Converged
+Transfer tests,LT-RN total duration (s),66,22,930.303,3137.674,Yes
+Transfer tests,LT-RN occurrences,66,22,76.639,126.928,Yes
+Transfer tests,RT-LN total duration (s),66,22,50.669,110.789,Yes
+Transfer tests,RT-LN occurrences,66,22,6.154,7.132,Yes
+Training sessions,LT-RN total duration (s),131,22,2408.655,3739.889,Yes
+Training sessions,LT-RN occurrences,131,22,51.856,30.960,Yes
+Training sessions,RT-LN total duration (s),131,22,136.109,93.504,Yes
+Training sessions,RT-LN occurrences,131,22,5.089,4.809,Yes

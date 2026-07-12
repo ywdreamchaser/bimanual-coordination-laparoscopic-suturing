@@ -1,0 +1,5 @@
+stage,group,available,expected
+training,uniform,65,66
+training,workload_adapted,66,66
+transfer,uniform,33,33
+transfer,workload_adapted,33,33

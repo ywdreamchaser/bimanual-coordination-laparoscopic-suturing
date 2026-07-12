@@ -1,0 +1,8 @@
+{
+  "input": "analysis_input.csv",
+  "rows": 197,
+  "participants": 22,
+  "training_rows_available": 131,
+  "transfer_rows_available": 66,
+  "output_directory": "outputs"
+}

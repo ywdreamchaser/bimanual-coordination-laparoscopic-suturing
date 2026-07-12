@@ -1,0 +1,7 @@
+stage,occasion,occasion_label,group,group_label,metric,metric_label,n,mean,sd,se,ci95_low,ci95_high
+transfer,baseline,Baseline,uniform,Uniform difficulty,lt_rn_count,LT-RN occurrences,11,23.09090909090909,8.915767442621476,2.68820502956745,17.10121502242494,29.080603159393238
+transfer,immediate,Immediate,uniform,Uniform difficulty,lt_rn_count,LT-RN occurrences,11,32.81818181818182,10.87950533634854,3.280294282303403,25.509230681833177,40.12713295453047
+transfer,day3_followup,3-day follow-up,uniform,Uniform difficulty,lt_rn_count,LT-RN occurrences,11,30.0,10.353743284435827,3.121771059103237,23.04426061620574,36.95573938379426
+transfer,baseline,Baseline,workload_adapted,Workload-adapted,lt_rn_count,LT-RN occurrences,11,24.181818181818183,5.635923736499312,1.6992949437296412,20.39555309671034,27.968083266926026
+transfer,immediate,Immediate,workload_adapted,Workload-adapted,lt_rn_count,LT-RN occurrences,11,40.54545454545455,24.467789586980007,7.3773161372161455,24.107769836737948,56.98313925417115
+transfer,day3_followup,3-day follow-up,workload_adapted,Workload-adapted,lt_rn_count,LT-RN occurrences,11,39.36363636363637,20.200360032795093,6.090637714442965,25.79284983871311,52.934422888559624

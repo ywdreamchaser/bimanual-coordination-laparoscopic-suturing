@@ -1,0 +1,11 @@
+Outcome,Predictor,B,95% CI,p value,Partial R2
+Transfer suture-completion score,Within-training mean LT-RN duration (s),-0.007,-0.031 to 0.016,.526,0.026
+Transfer suture-completion score,Within-training mean LT-RN count,0.274,0.098 to 0.449,.004,0.406
+Transfer suture-completion score,Within-training mean RT-LN duration (s),-0.082,-0.604 to 0.440,.744,0.007
+Transfer suture-completion score,Within-training mean RT-LN count,0.745,-1.891 to 3.381,.557,0.022
+Transfer suture-completion score,Workload-adapted group (vs uniform difficulty),0.992,-1.356 to 3.341,.384,0.048
+Transfer mean active suture duration,Within-training mean LT-RN duration (s),0.343,-0.342 to 1.027,.304,0.066
+Transfer mean active suture duration,Within-training mean LT-RN count,-8.490,-13.570 to -3.409,.003,0.440
+Transfer mean active suture duration,Within-training mean RT-LN duration (s),2.134,-12.981 to 17.249,.769,0.006
+Transfer mean active suture duration,Within-training mean RT-LN count,-27.536,-103.861 to 48.789,.456,0.035
+Transfer mean active suture duration,Workload-adapted group (vs uniform difficulty),-33.091,-101.097 to 34.915,.318,0.062

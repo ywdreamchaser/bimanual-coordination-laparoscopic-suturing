@@ -1,0 +1,45 @@
+name: Reproduce analyses
+
+on:
+  push:
+  pull_request:
+  workflow_dispatch:
+
+permissions:
+  contents: read
+
+jobs:
+  reproduce:
+    runs-on: ubuntu-latest
+    steps:
+      - name: Check out repository
+        uses: actions/checkout@v4
+
+      - name: Set up Python
+        uses: actions/setup-python@v5
+        with:
+          python-version: "3.11"
+          cache: pip
+
+      - name: Install dependencies
+        run: python -m pip install -r requirements.txt
+
+      - name: Reproduce analyses and figures
+        run: python run_analysis.py
+
+      - name: Verify analytic completeness
+        shell: python
+        run: |
+          import json
+          from pathlib import Path
+
+          summary = json.loads(Path("outputs/run_summary.json").read_text())
+          expected = {
+              "rows": 197,
+              "participants": 22,
+              "training_rows_available": 131,
+              "transfer_rows_available": 66,
+          }
+          for key, value in expected.items():
+              assert summary[key] == value, (key, summary[key], value)
+          print("Analytic completeness checks passed.")

@@ -1,0 +1,73 @@
+stage,occasion,occasion_label,group,group_label,metric,metric_label,n,mean,sd,se,ci95_low,ci95_high
+transfer,baseline,Baseline,workload_adapted,Workload-adapted,lt_rn_duration_s,LT-RN total duration (s),11,182.71254545454542,40.119128720259205,12.096372443733726,155.76014804456617,209.66494286452468
+transfer,baseline,Baseline,workload_adapted,Workload-adapted,lt_rn_count,LT-RN occurrences,11,24.181818181818183,5.635923736499312,1.6992949437296412,20.39555309671034,27.968083266926026
+transfer,baseline,Baseline,workload_adapted,Workload-adapted,rt_ln_duration_s,RT-LN total duration (s),11,6.806909090909091,7.625995927805698,2.299324285937246,1.683695316096716,11.930122865721465
+transfer,baseline,Baseline,workload_adapted,Workload-adapted,rt_ln_count,RT-LN occurrences,11,2.3636363636363638,2.157439559882375,0.6504925025453934,0.9142487457891924,3.813023981483535
+transfer,day3_followup,3-day follow-up,workload_adapted,Workload-adapted,lt_rn_duration_s,LT-RN total duration (s),11,239.20063636363636,72.28717208228957,21.795402450255306,190.63745336954568,287.7638193577271
+transfer,day3_followup,3-day follow-up,workload_adapted,Workload-adapted,lt_rn_count,LT-RN occurrences,11,39.36363636363637,20.200360032795093,6.090637714442965,25.79284983871311,52.934422888559624
+transfer,day3_followup,3-day follow-up,workload_adapted,Workload-adapted,rt_ln_duration_s,RT-LN total duration (s),11,16.557090909090906,22.651601808501518,6.829714918121395,1.339537752034369,31.774644066147445
+transfer,day3_followup,3-day follow-up,workload_adapted,Workload-adapted,rt_ln_count,RT-LN occurrences,11,5.090909090909091,5.539937643232918,1.670354047688124,1.3691283406826478,8.812689841135533
+transfer,immediate,Immediate,workload_adapted,Workload-adapted,lt_rn_duration_s,LT-RN total duration (s),11,241.54136363636363,90.96012762004321,27.4255103816842,180.43351841938014,302.6492088533471
+transfer,immediate,Immediate,workload_adapted,Workload-adapted,lt_rn_count,LT-RN occurrences,11,40.54545454545455,24.467789586980007,7.3773161372161455,24.107769836737948,56.98313925417115
+transfer,immediate,Immediate,workload_adapted,Workload-adapted,rt_ln_duration_s,RT-LN total duration (s),11,13.5,12.758062055030145,3.846700444418685,4.92901728783786,22.07098271216214
+transfer,immediate,Immediate,workload_adapted,Workload-adapted,rt_ln_count,RT-LN occurrences,11,4.181818181818182,3.9954519598709184,1.2046740926165416,1.4976370320779542,6.86599933155841
+transfer,baseline,Baseline,uniform,Uniform difficulty,lt_rn_duration_s,LT-RN total duration (s),11,174.95027272727273,64.51408149712884,19.45172745639874,131.60912304342256,218.2914224111229
+transfer,baseline,Baseline,uniform,Uniform difficulty,lt_rn_count,LT-RN occurrences,11,23.09090909090909,8.915767442621476,2.68820502956745,17.10121502242494,29.080603159393238
+transfer,baseline,Baseline,uniform,Uniform difficulty,rt_ln_duration_s,RT-LN total duration (s),11,5.243545454545454,7.893895063447909,2.38009891453595,-0.05964540850245559,10.546736317593364
+transfer,baseline,Baseline,uniform,Uniform difficulty,rt_ln_count,RT-LN occurrences,11,2.0,2.7202941017470885,0.8201995322647244,0.1724815557799977,3.8275184442200025
+transfer,day3_followup,3-day follow-up,uniform,Uniform difficulty,lt_rn_duration_s,LT-RN total duration (s),11,226.85090909090906,65.76182062329866,19.827934958012484,182.6715168563046,271.0303013255135
+transfer,day3_followup,3-day follow-up,uniform,Uniform difficulty,lt_rn_count,LT-RN occurrences,11,30.0,10.353743284435827,3.121771059103237,23.04426061620574,36.95573938379426
+transfer,day3_followup,3-day follow-up,uniform,Uniform difficulty,rt_ln_duration_s,RT-LN total duration (s),11,14.106363636363636,11.966701661466514,3.608096308109727,6.067024070556114,22.145703202171156
+transfer,day3_followup,3-day follow-up,uniform,Uniform difficulty,rt_ln_count,RT-LN occurrences,11,5.818181818181818,3.894051407420858,1.1741006757063959,3.2021224864970605,8.434241149866576
+transfer,immediate,Immediate,uniform,Uniform difficulty,lt_rn_duration_s,LT-RN total duration (s),11,219.90909090909088,57.03744048684958,17.19743537246419,181.59081700118037,258.2273648170014
+transfer,immediate,Immediate,uniform,Uniform difficulty,lt_rn_count,LT-RN occurrences,11,32.81818181818182,10.87950533634854,3.280294282303403,25.509230681833177,40.12713295453047
+transfer,immediate,Immediate,uniform,Uniform difficulty,rt_ln_duration_s,RT-LN total duration (s),11,10.306727272727272,11.22902012724983,3.385676956857867,2.762968904877602,17.85048564057694
+transfer,immediate,Immediate,uniform,Uniform difficulty,rt_ln_count,RT-LN occurrences,11,3.727272727272727,3.7172815091383407,1.1208025459943594,1.2299690291375618,6.224576425407893
+training,day1_session1,Day 1/S1,workload_adapted,Workload-adapted,lt_rn_duration_s,LT-RN total duration (s),11,220.98545454545453,72.89803530324207,21.979584641357796,172.01188805552442,269.95902103538464
+training,day1_session1,Day 1/S1,workload_adapted,Workload-adapted,lt_rn_count,LT-RN occurrences,11,24.545454545454547,9.469568483976833,2.8551823261750693,18.18371187499933,30.907197215909765
+training,day1_session1,Day 1/S1,workload_adapted,Workload-adapted,rt_ln_duration_s,RT-LN total duration (s),11,3.9124545454545454,7.2320201930530645,2.180536132420967,-0.9460827293524994,8.77099182026159
+training,day1_session1,Day 1/S1,workload_adapted,Workload-adapted,rt_ln_count,RT-LN occurrences,11,0.8181818181818182,1.4709304414677,0.44350221518728966,-0.170002698418959,1.8063663347825956
+training,day1_session2,Day 1/S2,workload_adapted,Workload-adapted,lt_rn_duration_s,LT-RN total duration (s),11,233.68990909090905,52.161934616067576,15.727415041867927,198.64704459480978,268.7327735870083
+training,day1_session2,Day 1/S2,workload_adapted,Workload-adapted,lt_rn_count,LT-RN occurrences,11,26.181818181818183,11.889644080612184,3.584862573296428,18.19424660322492,34.16938976041145
+training,day1_session2,Day 1/S2,workload_adapted,Workload-adapted,rt_ln_duration_s,RT-LN total duration (s),11,6.852181818181818,12.79503410560661,3.8578479370997925,-1.743639055525331,15.448002691888966
+training,day1_session2,Day 1/S2,workload_adapted,Workload-adapted,rt_ln_count,RT-LN occurrences,11,1.7272727272727273,3.2891004572955533,0.9917011013305195,-0.48237502615938044,3.936920480704835
+training,day2_session1,Day 2/S1,workload_adapted,Workload-adapted,lt_rn_duration_s,LT-RN total duration (s),11,293.7405454545455,86.43262778761692,26.060417819633752,235.67431601162411,351.8067748974669
+training,day2_session1,Day 2/S1,workload_adapted,Workload-adapted,lt_rn_count,LT-RN occurrences,11,24.454545454545453,11.622079300741639,3.5041887567560064,16.646726340923916,32.262364568166994
+training,day2_session1,Day 2/S1,workload_adapted,Workload-adapted,rt_ln_duration_s,RT-LN total duration (s),11,10.785272727272728,15.544645708995168,4.6868870287040965,0.342237643746623,21.22830781079883
+training,day2_session1,Day 2/S1,workload_adapted,Workload-adapted,rt_ln_count,RT-LN occurrences,11,1.6363636363636365,2.4605985967941733,0.7418983913855697,-0.016688993708670496,3.2894162664359436
+training,day2_session2,Day 2/S2,workload_adapted,Workload-adapted,lt_rn_duration_s,LT-RN total duration (s),11,287.77772727272725,99.13182067337502,29.889368541671047,221.18006396369367,354.3753905817608
+training,day2_session2,Day 2/S2,workload_adapted,Workload-adapted,lt_rn_count,LT-RN occurrences,11,27.636363636363637,14.129916682505437,4.260330177713987,18.143756445109513,37.12897082761776
+training,day2_session2,Day 2/S2,workload_adapted,Workload-adapted,rt_ln_duration_s,RT-LN total duration (s),11,10.957090909090908,17.097234469086196,5.155010153335466,-0.5289874959395657,22.443169314121384
+training,day2_session2,Day 2/S2,workload_adapted,Workload-adapted,rt_ln_count,RT-LN occurrences,11,1.9090909090909092,2.773248833211526,0.8361659845503214,0.04599699220498321,3.772184825976835
+training,day3_session1,Day 3/S1,workload_adapted,Workload-adapted,lt_rn_duration_s,LT-RN total duration (s),11,287.4844545454545,71.51356438797276,21.562150954166142,239.44098827208404,335.527920818825
+training,day3_session1,Day 3/S1,workload_adapted,Workload-adapted,lt_rn_count,LT-RN occurrences,11,23.454545454545453,10.472474744430148,3.1575699412498053,16.419041190582746,30.49004971850816
+training,day3_session1,Day 3/S1,workload_adapted,Workload-adapted,rt_ln_duration_s,RT-LN total duration (s),11,9.074636363636364,19.063160589328973,5.747759181190411,-3.7321691798348073,21.881441907107536
+training,day3_session1,Day 3/S1,workload_adapted,Workload-adapted,rt_ln_count,RT-LN occurrences,11,1.7272727272727273,3.8753298979805346,1.1684559282225184,-0.8762093232335515,4.330754777779006
+training,day3_session2,Day 3/S2,workload_adapted,Workload-adapted,lt_rn_duration_s,LT-RN total duration (s),11,305.9074545454545,85.00236643101607,25.629177794907413,248.80208775615742,363.01282133475166
+training,day3_session2,Day 3/S2,workload_adapted,Workload-adapted,lt_rn_count,LT-RN occurrences,11,26.181818181818183,12.710768519788108,3.8324409070180225,17.64260769894981,34.72102866468656
+training,day3_session2,Day 3/S2,workload_adapted,Workload-adapted,rt_ln_duration_s,RT-LN total duration (s),11,11.242818181818182,15.424126061584055,4.650548987765134,0.8807492991132442,21.60488706452312
+training,day3_session2,Day 3/S2,workload_adapted,Workload-adapted,rt_ln_count,RT-LN occurrences,11,2.5454545454545454,3.297381881542882,0.9941980446903504,0.3302432555111894,4.7606658353979014
+training,day1_session2,Day 1/S2,uniform,Uniform difficulty,lt_rn_duration_s,LT-RN total duration (s),11,211.57236363636363,83.16126591661858,25.074065103308612,155.70386500244848,267.4408622702788
+training,day1_session2,Day 1/S2,uniform,Uniform difficulty,lt_rn_count,LT-RN occurrences,11,17.454545454545453,4.885972500201702,1.4731761381057926,14.17210446541284,20.736986443678067
+training,day1_session2,Day 1/S2,uniform,Uniform difficulty,rt_ln_duration_s,RT-LN total duration (s),11,6.614727272727273,13.421989525334231,4.046882108692183,-2.4022879830579216,15.631742528512468
+training,day1_session2,Day 1/S2,uniform,Uniform difficulty,rt_ln_count,RT-LN occurrences,11,1.3636363636363635,2.062654952856986,0.6219138682358935,-0.022074088769103106,2.74934681604183
+training,day2_session1,Day 2/S1,uniform,Uniform difficulty,lt_rn_duration_s,LT-RN total duration (s),11,258.40463636363637,105.74860835043904,31.884405090968198,187.36175460798117,329.44751811929154
+training,day2_session1,Day 2/S1,uniform,Uniform difficulty,lt_rn_count,LT-RN occurrences,11,15.909090909090908,4.846742111038,1.4613477307207359,12.653005254010061,19.165176564171755
+training,day2_session1,Day 2/S1,uniform,Uniform difficulty,rt_ln_duration_s,RT-LN total duration (s),11,7.2880909090909105,12.38663640747193,3.734711398012741,-1.033364657777251,15.609546475959071
+training,day2_session1,Day 2/S1,uniform,Uniform difficulty,rt_ln_count,RT-LN occurrences,11,1.4545454545454546,2.6594599588501557,0.8018573480436344,-0.3321040563812474,3.2411949654721566
+training,day2_session2,Day 2/S2,uniform,Uniform difficulty,lt_rn_duration_s,LT-RN total duration (s),11,238.9250909090909,94.45389718741578,28.478921541587578,175.47009935961077,302.380082458571
+training,day2_session2,Day 2/S2,uniform,Uniform difficulty,lt_rn_count,LT-RN occurrences,11,17.818181818181817,5.896069569097397,1.7777318635025916,13.857148384697732,21.779215251665903
+training,day2_session2,Day 2/S2,uniform,Uniform difficulty,rt_ln_duration_s,RT-LN total duration (s),11,5.319999999999999,10.076518287583266,3.0381845775516547,-1.449497096748349,12.089497096748348
+training,day2_session2,Day 2/S2,uniform,Uniform difficulty,rt_ln_count,RT-LN occurrences,11,1.0,2.0,0.6030226891555273,-0.34361828233667246,2.3436182823366725
+training,day3_session1,Day 3/S1,uniform,Uniform difficulty,lt_rn_duration_s,LT-RN total duration (s),11,248.8192727272727,47.01943105162143,14.176891877655828,217.2311891342591,280.4073563202863
+training,day3_session1,Day 3/S1,uniform,Uniform difficulty,lt_rn_count,LT-RN occurrences,11,25.0,6.6932802122726045,2.018099916438052,20.503393168994123,29.496606831005877
+training,day3_session1,Day 3/S1,uniform,Uniform difficulty,rt_ln_duration_s,RT-LN total duration (s),11,11.902,22.87440941751284,6.896893939896556,-3.4652373455122056,27.269237345512202
+training,day3_session1,Day 3/S1,uniform,Uniform difficulty,rt_ln_count,RT-LN occurrences,11,2.4545454545454546,4.782544016810223,1.441991277010789,-0.7584113339875866,5.667502243078496
+training,day3_session2,Day 3/S2,uniform,Uniform difficulty,lt_rn_duration_s,LT-RN total duration (s),11,250.12199999999996,68.39772910557777,20.622691268688392,204.17178035171725,296.07221964828267
+training,day3_session2,Day 3/S2,uniform,Uniform difficulty,lt_rn_count,LT-RN occurrences,11,23.454545454545453,10.318562267715752,3.111163583448354,16.522440999379334,30.386649909711572
+training,day3_session2,Day 3/S2,uniform,Uniform difficulty,rt_ln_duration_s,RT-LN total duration (s),11,14.33,25.82502679185445,7.786538551768805,-3.0194890696850134,31.67948906968501
+training,day3_session2,Day 3/S2,uniform,Uniform difficulty,rt_ln_count,RT-LN occurrences,11,3.272727272727273,6.1333662713213055,1.8492795112539915,-0.8477242544799339,7.39317879993448
+training,day1_session1,Day 1/S1,uniform,Uniform difficulty,lt_rn_duration_s,LT-RN total duration (s),10,214.05490000000003,100.4697913542507,31.771337672132518,142.183140913305,285.92665908669505
+training,day1_session1,Day 1/S1,uniform,Uniform difficulty,lt_rn_count,LT-RN occurrences,10,16.7,4.321779468896786,1.3666666666666667,13.608385210842453,19.791614789157546
+training,day1_session1,Day 1/S1,uniform,Uniform difficulty,rt_ln_duration_s,RT-LN total duration (s),10,3.8703000000000003,6.791355208400358,2.147615085779262,-0.9879428492290385,8.72854284922904
+training,day1_session1,Day 1/S1,uniform,Uniform difficulty,rt_ln_count,RT-LN occurrences,10,0.8,1.3165611772087666,0.41633319989322654,-0.14181113024915915,1.7418111302491592

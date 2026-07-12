@@ -1,0 +1,9 @@
+Outcome,Predictor,B,95% CI,p value,Partial R2
+Post-transfer LT-RN duration,Within-training mean LT-RN duration,0.663,0.223 to 1.102,.005,0.344
+Post-transfer LT-RN duration,Workload-adapted group (vs uniform difficulty),-5.988,-56.647 to 44.670,.807,0.003
+Post-transfer LT-RN count,Within-training mean LT-RN count,1.381,0.604 to 2.158,.001,0.421
+Post-transfer LT-RN count,Workload-adapted group (vs uniform difficulty),0.191,-12.425 to 12.808,.975,0.000
+Post-transfer RT-LN duration,Within-training mean RT-LN duration,0.496,0.040 to 0.952,.035,0.214
+Post-transfer RT-LN duration,Workload-adapted group (vs uniform difficulty),2.537,-8.682 to 13.756,.641,0.012
+Post-transfer RT-LN count,Within-training mean RT-LN count,0.878,0.260 to 1.495,.008,0.318
+Post-transfer RT-LN count,Workload-adapted group (vs uniform difficulty),-0.139,-3.129 to 2.851,.923,0.000

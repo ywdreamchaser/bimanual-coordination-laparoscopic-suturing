@@ -1,0 +1,23 @@
+cff-version: 1.2.0
+message: "If you use this software or processed dataset, please cite the archived release."
+type: software
+title: "Reproducible analysis for video-coded bimanual coordination during laparoscopic suturing training"
+version: 1.0.0
+date-released: 2026-07-11
+authors:
+  - family-names: Wu
+    given-names: Yun
+    affiliation: University of Alberta
+  - family-names: Zheng
+    given-names: Bin
+    affiliation: University of Alberta
+repository-code: "https://github.com/ywdreamchaser/bimanual-coordination-laparoscopic-suturing"
+keywords:
+  - laparoscopy
+  - surgical simulation
+  - bimanual coordination
+  - suturing
+  - skill assessment
+  - cognitive load
+license: MIT
+
