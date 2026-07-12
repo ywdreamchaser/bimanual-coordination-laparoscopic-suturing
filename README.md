@@ -2,6 +2,8 @@
 
 [![Reproduce analyses](https://github.com/ywdreamchaser/bimanual-coordination-laparoscopic-suturing/actions/workflows/reproduce.yml/badge.svg)](https://github.com/ywdreamchaser/bimanual-coordination-laparoscopic-suturing/actions/workflows/reproduce.yml)
 
+Archived release DOI: `10.5281/zenodo.21316250`
+
 Reproducible Python analysis, deidentified processed data, statistical tables,
 source data, and publication figures for the study:
 
@@ -55,8 +57,8 @@ raw media. See `PROVENANCE.md` for the data-audit record.
 ## Citation
 
 Please cite the archived release rather than the moving `main` branch. Citation
-metadata are supplied in `CITATION.cff`; a release-specific DOI will be added by
-Zenodo after archiving.
+metadata are supplied in `CITATION.cff`. The archived version is identified by
+DOI `10.5281/zenodo.21316250`.
 
 ## License
 

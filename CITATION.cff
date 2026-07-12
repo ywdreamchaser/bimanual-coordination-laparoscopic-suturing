@@ -4,6 +4,7 @@ type: software
 title: "Reproducible analysis for video-coded bimanual coordination during laparoscopic suturing training"
 version: 1.0.0
 date-released: 2026-07-11
+doi: 10.5281/zenodo.21316250
 authors:
   - family-names: Wu
     given-names: Yun
@@ -20,4 +21,3 @@ keywords:
   - skill assessment
   - cognitive load
 license: MIT
-
