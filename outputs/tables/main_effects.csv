@@ -1,4 +1,4 @@
-Stage,Metric,"Group, chi-square (df)",Group p value,"Occasion, chi-square (df)",Occasion p value,"Group x occasion, chi-square (df)",Interaction p value
+Stage,Metric,"Group, χ² (df)",Group p value,"Occasion, χ² (df)",Occasion p value,"Group × occasion, χ² (df)",Interaction p value
 Transfer tests,LT-RN total duration (s),0.53 (1),.466,11.48 (2),.003,0.17 (2),.916
 Transfer tests,LT-RN occurrences,1.64 (1),.201,14.00 (2),<0.001,1.63 (2),.442
 Transfer tests,RT-LN total duration (s),0.36 (1),.549,8.01 (2),.018,0.07 (2),.968

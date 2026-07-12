@@ -1,0 +1,3 @@
+Outcome,Predictor,B,95% CI,p value
+Transfer suture-completion score,Within-training mean LT-RN count,0.241,0.051 to 0.432,.016
+Transfer mean active suture duration,Within-training mean LT-RN count,-8.605,-14.215 to -2.994,.005

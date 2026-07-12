@@ -2,8 +2,8 @@ cff-version: 1.2.0
 message: "If you use this software or processed dataset, please cite the archived release."
 type: software
 title: "Reproducible analysis for video-coded bimanual coordination during laparoscopic suturing training"
-version: 1.0.0
-date-released: 2026-07-11
+version: 1.1.0
+date-released: 2026-07-12
 doi: 10.5281/zenodo.21316250
 authors:
   - family-names: Wu

@@ -312,6 +312,15 @@ def make_participant_data(data: pd.DataFrame) -> tuple[pd.DataFrame, pd.DataFram
         .rename(columns={column: f"post_transfer_mean_{column}" for column in COORDINATION_VARS + TRANSFER_OUTCOMES})
     )
     participant = post_mean.merge(training_mean, on=["participant_id", "group"], how="left")
+    baseline = (
+        data[(data["stage"] == "transfer") & (data["occasion"] == "baseline")][
+            ["participant_id", "group", *TRANSFER_OUTCOMES]
+        ]
+        .rename(columns={column: f"baseline_{column}" for column in TRANSFER_OUTCOMES})
+    )
+    participant = participant.merge(
+        baseline, on=["participant_id", "group"], how="left", validate="one_to_one"
+    )
     return participant, repeated
 
 
@@ -439,17 +448,6 @@ def run_association_models(
             )
         )
 
-    matching = []
-    for metric in COORDINATION_VARS:
-        matching.append(
-            fit_ols(
-                participant,
-                f"post_transfer_mean_{metric}",
-                [f"training_mean_{metric}"],
-                f"Post-transfer {SHORT_LABELS[metric]}",
-            )
-        )
-
     sensitivity = []
     for outcome in TRANSFER_OUTCOMES:
         sensitivity.append(
@@ -461,12 +459,67 @@ def run_association_models(
                 cluster="participant_id",
             )
         )
+
+    baseline_adjusted = []
+    for outcome in TRANSFER_OUTCOMES:
+        baseline_adjusted.append(
+            fit_ols(
+                participant,
+                f"post_transfer_mean_{outcome}",
+                [*predictors, f"baseline_{outcome}"],
+                OUTCOME_LABELS[outcome],
+            )
+        )
     return {
         "primary": pd.concat(primary, ignore_index=True),
         "standardized": pd.concat(standardized, ignore_index=True),
-        "matching": pd.concat(matching, ignore_index=True),
         "sensitivity": pd.concat(sensitivity, ignore_index=True),
+        "baseline_adjusted": pd.concat(baseline_adjusted, ignore_index=True),
     }
+
+
+def run_leave_one_participant_out(participant: pd.DataFrame) -> tuple[pd.DataFrame, pd.DataFrame]:
+    """Refit the primary models after omitting each participant in turn."""
+    predictors = [f"training_mean_{metric}" for metric in COORDINATION_VARS]
+    detailed_rows = []
+    for outcome in TRANSFER_OUTCOMES:
+        outcome_label = OUTCOME_LABELS[outcome]
+        for participant_id in participant["participant_id"].astype(str):
+            reduced = participant[participant["participant_id"].astype(str) != participant_id]
+            fitted = fit_ols(
+                reduced,
+                f"post_transfer_mean_{outcome}",
+                predictors,
+                outcome_label,
+            )
+            focal = fitted[fitted["term"] == "training_mean_lt_rn_count"].iloc[0]
+            detailed_rows.append(
+                {
+                    "model_outcome": outcome_label,
+                    "omitted_participant": participant_id,
+                    "estimate": focal["estimate"],
+                    "ci95_low": focal["ci95_low"],
+                    "ci95_high": focal["ci95_high"],
+                    "p_value": focal["p_value"],
+                    "n": focal["n"],
+                }
+            )
+
+    detailed = pd.DataFrame(detailed_rows)
+    summary_rows = []
+    for outcome_label, subset in detailed.groupby("model_outcome", sort=False):
+        summary_rows.append(
+            {
+                "model_outcome": outcome_label,
+                "estimate_min": subset["estimate"].min(),
+                "estimate_max": subset["estimate"].max(),
+                "p_value_min": subset["p_value"].min(),
+                "p_value_max": subset["p_value"].max(),
+                "omissions_with_p_below_0_05": int((subset["p_value"] < 0.05).sum()),
+                "total_omissions": len(subset),
+            }
+        )
+    return detailed, pd.DataFrame(summary_rows)
 
 
 def build_longitudinal_design(
@@ -572,13 +625,23 @@ def fit_random_intercept_ml(
     }
 
 
-def run_longitudinal_models(data: pd.DataFrame) -> pd.DataFrame:
+def run_longitudinal_models(
+    data: pd.DataFrame, transform_skewed: bool = False
+) -> pd.DataFrame:
     rows = []
     for stage in ("training", "transfer"):
         subset = data[data["stage"] == stage].copy()
         participant_ids = subset["participant_id"].to_numpy(str)
         for metric in COORDINATION_VARS:
             response = subset[metric].to_numpy(float)
+            transformation = "none"
+            if transform_skewed:
+                if metric.endswith("_count"):
+                    response = np.sqrt(np.clip(response, 0, None))
+                    transformation = "square_root"
+                else:
+                    response = np.log1p(np.clip(response, 0, None))
+                    transformation = "log1p"
             designs = {
                 "group_only": build_longitudinal_design(subset, stage, True, False, False),
                 "occasion_only": build_longitudinal_design(subset, stage, False, True, False),
@@ -607,6 +670,7 @@ def run_longitudinal_models(data: pd.DataFrame) -> pd.DataFrame:
                         "metric": metric,
                         "metric_label": METRIC_LABELS[metric],
                         "term": term,
+                        "transformation": transformation,
                         "chi_square": chi_square,
                         "df": df_difference,
                         "p_value": stats.chi2.sf(chi_square, df_difference),
@@ -659,11 +723,11 @@ def build_publication_tables(
                 {
                     "Stage": stage_labels[stage],
                     "Metric": METRIC_LABELS[metric],
-                    "Group, chi-square (df)": f"{group['chi_square']:.2f} ({int(group['df'])})",
+                    "Group, χ² (df)": f"{group['chi_square']:.2f} ({int(group['df'])})",
                     "Group p value": p_text(float(group["p_value"])),
-                    "Occasion, chi-square (df)": f"{occasion['chi_square']:.2f} ({int(occasion['df'])})",
+                    "Occasion, χ² (df)": f"{occasion['chi_square']:.2f} ({int(occasion['df'])})",
                     "Occasion p value": p_text(float(occasion["p_value"])),
-                    "Group x occasion, chi-square (df)": (
+                    "Group × occasion, χ² (df)": (
                         f"{interaction['chi_square']:.2f} ({int(interaction['df'])})"
                     ),
                     "Interaction p value": p_text(float(interaction["p_value"])),
@@ -698,30 +762,6 @@ def build_publication_tables(
             )
     primary_table = pd.DataFrame(primary_rows)
 
-    matching_rows = []
-    for metric in COORDINATION_VARS:
-        outcome = f"Post-transfer {SHORT_LABELS[metric]}"
-        predictor_term = f"training_mean_{metric}"
-        for term, term_label in (
-            (predictor_term, f"Within-training mean {SHORT_LABELS[metric]}"),
-            (
-                "group_workload_adapted",
-                "Workload-adapted group (vs uniform difficulty)",
-            ),
-        ):
-            row = term_row(models["matching"], outcome, term)
-            matching_rows.append(
-                {
-                    "Outcome": outcome,
-                    "Predictor": term_label,
-                    "B": f"{row['estimate']:.3f}",
-                    "95% CI": ci_text(row["ci95_low"], row["ci95_high"]),
-                    "p value": p_text(row["p_value"]),
-                    "Partial R2": f"{row['partial_r2']:.3f}",
-                }
-            )
-    matching_table = pd.DataFrame(matching_rows)
-
     model_info_rows = []
     for stage in ("transfer", "training"):
         for metric in COORDINATION_VARS:
@@ -755,6 +795,22 @@ def build_publication_tables(
         )
     sensitivity_table = pd.DataFrame(sensitivity_rows)
 
+    baseline_adjusted_rows = []
+    for outcome in OUTCOME_LABELS.values():
+        row = term_row(
+            models["baseline_adjusted"], outcome, "training_mean_lt_rn_count"
+        )
+        baseline_adjusted_rows.append(
+            {
+                "Outcome": outcome,
+                "Predictor": "Within-training mean LT-RN count",
+                "B": f"{row['estimate']:.3f}",
+                "95% CI": ci_text(row["ci95_low"], row["ci95_high"]),
+                "p value": p_text(row["p_value"]),
+            }
+        )
+    baseline_adjusted_table = pd.DataFrame(baseline_adjusted_rows)
+
     completeness_summary = (
         completeness.groupby(["stage", "group"], as_index=False)
         .agg(available=("available", "sum"), expected=("available", "size"))
@@ -762,9 +818,9 @@ def build_publication_tables(
     tables = {
         "main_effects": main_effects,
         "primary_associations": primary_table,
-        "matching_coordination_associations": matching_table,
         "longitudinal_model_information": model_information,
         "sensitivity_analysis": sensitivity_table,
+        "baseline_adjusted_sensitivity": baseline_adjusted_table,
         "data_completeness": completeness_summary,
     }
     for name, table in tables.items():
@@ -773,11 +829,11 @@ def build_publication_tables(
     models["standardized"].to_csv(
         dirs.tables / "primary_associations_standardized.csv", index=False
     )
-    models["matching"].to_csv(
-        dirs.tables / "matching_coordination_associations_full_model.csv", index=False
-    )
     models["sensitivity"].to_csv(
         dirs.tables / "sensitivity_analysis_full_model.csv", index=False
+    )
+    models["baseline_adjusted"].to_csv(
+        dirs.tables / "baseline_adjusted_sensitivity_full_model.csv", index=False
     )
     longitudinal.to_csv(dirs.tables / "longitudinal_likelihood_ratio_tests.csv", index=False)
     return tables
@@ -917,7 +973,7 @@ def plot_adjusted_forest(
     ax.axvline(0, color="#7B8085", lw=0.8)
     ax.set_yticks(y_positions)
     ax.set_yticklabels([label_map[item] for item in order])
-    ax.set_xlabel("Standardized regression coefficient (95% CI)")
+    ax.set_xlabel("Standardized regression coefficient, β (95% CI)")
     ax.set_title("Adjusted associations", loc="left", fontweight="bold", color=NEUTRAL, pad=11)
     clean_axes(ax)
     ax.grid(axis="x", color=GRID, linewidth=0.5)
@@ -999,7 +1055,7 @@ def plot_transfer_scatter(
         annotation = (
             f"adjusted B={row['estimate']:.{decimals}f}\n"
             f"95% CI {row['ci95_low']:.{decimals}f} to {row['ci95_high']:.{decimals}f}\n"
-            f"p={p_text(row['p_value'])}".replace("p=<", "p<")
+            f"P={p_text(row['p_value'])}".replace("P=<", "P<")
         )
         ax.text(
             0.03,
@@ -1084,9 +1140,9 @@ def plot_lt_rn_trajectory(
         longitudinal, stage, "lt_rn_count", "Group x occasion"
     )
     stat_text = (
-        f"occasion: chi-square({int(occasion['df'])})={occasion['chi_square']:.2f}, "
-        f"p={p_text(occasion['p_value'])}; interaction: p={p_text(interaction['p_value'])}"
-    ).replace("p=<", "p<")
+        f"occasion: χ²({int(occasion['df'])})={occasion['chi_square']:.2f}, "
+        f"P={p_text(occasion['p_value'])}; interaction: P={p_text(interaction['p_value'])}"
+    ).replace("P=<", "P<")
     ax.text(
         0.02,
         0.96,
@@ -1120,4 +1176,3 @@ def create_figures(
     plot_transfer_scatter(participant, models["primary"], dirs)
     plot_lt_rn_trajectory(summary, longitudinal, "transfer", dirs)
     plot_lt_rn_trajectory(summary, longitudinal, "training", dirs)
-

@@ -1,8 +1,8 @@
 {
   "title": "Reproducible analysis for video-coded bimanual coordination during laparoscopic suturing training",
   "upload_type": "software",
-  "version": "1.0.0",
-  "description": "Python analysis, deidentified processed data, source-data tables, and publication figures supporting a study of video-coded bimanual coordination during laparoscopic suturing training and subsequent simulation transfer performance.",
+  "version": "1.1.0",
+  "description": "Python analysis, deidentified processed data, source-data tables, publication figures, and robustness checks supporting a study of video-coded bimanual coordination during laparoscopic suturing training and subsequent simulation transfer performance.",
   "creators": [
     {
       "name": "Wu, Yun",

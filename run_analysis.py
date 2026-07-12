@@ -15,6 +15,7 @@ from src.analysis_utils import (
     make_output_dirs,
     make_participant_data,
     run_association_models,
+    run_leave_one_participant_out,
     run_longitudinal_models,
     setup_style,
     summarize_longitudinal,
@@ -52,12 +53,23 @@ def main() -> None:
     participant, repeated = make_participant_data(data)
     models = run_association_models(participant, repeated)
     longitudinal = run_longitudinal_models(data)
+    transformed_longitudinal = run_longitudinal_models(data, transform_skewed=True)
+    leave_one_out, leave_one_out_summary = run_leave_one_participant_out(participant)
     build_publication_tables(models, longitudinal, completeness, dirs)
     compute_diagnostics(participant, models, dirs)
     create_figures(participant, models, summary, longitudinal, dirs)
 
     summary.to_csv(dirs.source_data / "longitudinal_group_summary.csv", index=False)
     participant.to_csv(dirs.source_data / "participant_level_analysis_data.csv", index=False)
+    transformed_longitudinal.to_csv(
+        dirs.tables / "longitudinal_transformation_sensitivity.csv", index=False
+    )
+    leave_one_out.to_csv(
+        dirs.tables / "leave_one_participant_out_detailed.csv", index=False
+    )
+    leave_one_out_summary.to_csv(
+        dirs.tables / "leave_one_participant_out_summary.csv", index=False
+    )
     run_summary = {
         "input": args.input.name,
         "rows": len(data),
