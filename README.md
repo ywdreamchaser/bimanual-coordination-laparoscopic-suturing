@@ -84,5 +84,5 @@ was not imputed. Thus, 131 of 132 planned training-session observations and all
 
 Version 1.1.0 is available at
 `https://github.com/ywdreamchaser/bimanual-coordination-laparoscopic-suturing/releases/tag/v1.1.0`
-and is archived as a versioned Zenodo release. Version 1.0.0 remains available
-as an immutable historical release.
+and archived by Zenodo under DOI `10.5281/zenodo.21328522`. Version 1.0.0
+remains available as an immutable historical release.
