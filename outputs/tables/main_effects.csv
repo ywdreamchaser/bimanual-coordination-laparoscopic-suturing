@@ -1,9 +1,9 @@
 Stage,Metric,"Group, χ² (df)",Group p value,"Occasion, χ² (df)",Occasion p value,"Group × occasion, χ² (df)",Interaction p value
 Transfer tests,LT-RN total duration (s),0.53 (1),.466,11.48 (2),.003,0.17 (2),.916
-Transfer tests,LT-RN occurrences,1.64 (1),.201,14.00 (2),<0.001,1.63 (2),.442
+Transfer tests,LT-RN count,1.64 (1),.201,14.00 (2),<0.001,1.63 (2),.442
 Transfer tests,RT-LN total duration (s),0.36 (1),.549,8.01 (2),.018,0.07 (2),.968
-Transfer tests,RT-LN occurrences,0.00 (1),.981,13.87 (2),<0.001,0.66 (2),.718
+Transfer tests,RT-LN count,0.00 (1),.981,13.87 (2),<0.001,0.66 (2),.718
 Training sessions,LT-RN total duration (s),2.14 (1),.144,19.64 (5),.001,2.08 (5),.838
-Training sessions,LT-RN occurrences,3.30 (1),.069,10.52 (5),.062,16.62 (5),.005
+Training sessions,LT-RN count,3.30 (1),.069,10.52 (5),.062,16.62 (5),.005
 Training sessions,RT-LN total duration (s),0.02 (1),.901,10.39 (5),.065,3.43 (5),.634
-Training sessions,RT-LN occurrences,0.00 (1),.986,10.84 (5),.055,2.33 (5),.802
+Training sessions,RT-LN count,0.00 (1),.986,10.84 (5),.055,2.33 (5),.802

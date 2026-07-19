@@ -10,12 +10,14 @@ from __future__ import annotations
 
 import math
 from dataclasses import dataclass
+from io import BytesIO
 from pathlib import Path
 
 import matplotlib as mpl
 import matplotlib.pyplot as plt
 import numpy as np
 import pandas as pd
+from PIL import Image
 from scipy import stats
 from scipy.optimize import minimize
 
@@ -47,15 +49,15 @@ TRAINING_OCCASIONS = [
     "day3_session1",
     "day3_session2",
 ]
-TRANSFER_OCCASIONS = ["baseline", "immediate", "day3_followup"]
+TRANSFER_OCCASIONS = ["baseline", "immediate_day3", "delayed_day7"]
 OCCASION_ORDER = {
     "training": TRAINING_OCCASIONS,
     "transfer": TRANSFER_OCCASIONS,
 }
 OCCASION_LABELS = {
     "baseline": "Baseline",
-    "immediate": "Immediate",
-    "day3_followup": "3-day follow-up",
+    "immediate_day3": "Immediate (Day 3)",
+    "delayed_day7": "Delayed (Day 7)",
     "day1_session1": "Day 1/S1",
     "day1_session2": "Day 1/S2",
     "day2_session1": "Day 2/S1",
@@ -70,9 +72,9 @@ GROUP_LABELS = {
 GROUP_COLORS = {"uniform": "#3F6F8F", "workload_adapted": "#C96F3D"}
 METRIC_LABELS = {
     "lt_rn_duration_s": "LT-RN total duration (s)",
-    "lt_rn_count": "LT-RN occurrences",
+    "lt_rn_count": "LT-RN count",
     "rt_ln_duration_s": "RT-LN total duration (s)",
-    "rt_ln_count": "RT-LN occurrences",
+    "rt_ln_count": "RT-LN count",
 }
 SHORT_LABELS = {
     "lt_rn_duration_s": "LT-RN duration",
@@ -161,15 +163,22 @@ def save_figure(fig: plt.Figure, base: Path) -> None:
     fig.savefig(base.with_suffix(".svg"), bbox_inches="tight")
     fig.savefig(base.with_suffix(".pdf"), bbox_inches="tight")
     fig.savefig(base.with_suffix(".png"), dpi=300, bbox_inches="tight")
-    try:
-        fig.savefig(
+    tiff_buffer = BytesIO()
+    fig.savefig(
+        tiff_buffer,
+        format="tiff",
+        dpi=600,
+        bbox_inches="tight",
+        pil_kwargs={"compression": "tiff_lzw"},
+    )
+    tiff_buffer.seek(0)
+    with Image.open(tiff_buffer) as rendered:
+        rendered.convert("RGB").save(
             base.with_suffix(".tiff"),
-            dpi=600,
-            bbox_inches="tight",
-            pil_kwargs={"compression": "tiff_lzw"},
+            format="TIFF",
+            compression="raw",
+            dpi=(600, 600),
         )
-    except TypeError:
-        fig.savefig(base.with_suffix(".tiff"), dpi=600, bbox_inches="tight")
 
 
 def p_text(value: float) -> str:
@@ -226,7 +235,9 @@ def load_and_validate_data(path: Path) -> tuple[pd.DataFrame, pd.DataFrame]:
     transfer = data[data["stage"] == "transfer"]
     if transfer[TRANSFER_OUTCOMES].isna().any().any():
         raise ValueError("Transfer rows must contain both transfer outcome values.")
-
+    training = data[data["stage"] == "training"]
+    if training[TRANSFER_OUTCOMES].notna().any().any():
+        raise ValueError("Training rows must leave transfer outcome fields empty.")
     participant_groups = data[["participant_id", "group"]].drop_duplicates()
     expected_rows = []
     for row in participant_groups.itertuples(index=False):
@@ -296,12 +307,20 @@ def summarize_longitudinal(data: pd.DataFrame) -> pd.DataFrame:
 def make_participant_data(data: pd.DataFrame) -> tuple[pd.DataFrame, pd.DataFrame]:
     training = data[data["stage"] == "training"]
     training_mean = (
-        training.groupby(["participant_id", "group"], as_index=False)[COORDINATION_VARS]
+        training.groupby(["participant_id", "group"], as_index=False)[
+            COORDINATION_VARS
+        ]
         .mean()
-        .rename(columns={column: f"training_mean_{column}" for column in COORDINATION_VARS})
+        .rename(
+            columns={
+                column: f"training_mean_{column}"
+                for column in COORDINATION_VARS
+            }
+        )
     )
     post_transfer = data[
-        (data["stage"] == "transfer") & (data["occasion"].isin(["immediate", "day3_followup"]))
+        (data["stage"] == "transfer")
+        & (data["occasion"].isin(["immediate_day3", "delayed_day7"]))
     ]
     repeated = post_transfer.merge(training_mean, on=["participant_id", "group"], how="left")
     post_mean = (
@@ -314,9 +333,17 @@ def make_participant_data(data: pd.DataFrame) -> tuple[pd.DataFrame, pd.DataFram
     participant = post_mean.merge(training_mean, on=["participant_id", "group"], how="left")
     baseline = (
         data[(data["stage"] == "transfer") & (data["occasion"] == "baseline")][
-            ["participant_id", "group", *TRANSFER_OUTCOMES]
+            ["participant_id", "group", "lt_rn_count", *TRANSFER_OUTCOMES]
         ]
-        .rename(columns={column: f"baseline_{column}" for column in TRANSFER_OUTCOMES})
+        .rename(
+            columns={
+                "lt_rn_count": "baseline_lt_rn_count",
+                **{
+                    column: f"baseline_{column}"
+                    for column in TRANSFER_OUTCOMES
+                },
+            }
+        )
     )
     participant = participant.merge(
         baseline, on=["participant_id", "group"], how="left", validate="one_to_one"
@@ -470,11 +497,48 @@ def run_association_models(
                 OUTCOME_LABELS[outcome],
             )
         )
+    primary_table = pd.concat(primary, ignore_index=True)
+    coordination_mask = primary_table["term"].isin(predictors)
+    primary_table["p_value_holm_primary_family"] = np.nan
+    primary_table.loc[
+        coordination_mask, "p_value_holm_primary_family"
+    ] = holm_adjust(primary_table.loc[coordination_mask, "p_value"].tolist())
+
+    baseline_coordination_adjusted = []
+    for outcome in TRANSFER_OUTCOMES:
+        outcome_column = f"post_transfer_mean_{outcome}"
+        baseline_coordination_adjusted.append(
+            fit_ols(
+                participant,
+                outcome_column,
+                ["training_mean_lt_rn_count", "baseline_lt_rn_count"],
+                OUTCOME_LABELS[outcome],
+            )
+        )
+    first = "post_transfer_mean_suture_completion_score"
+    second = "post_transfer_mean_mean_active_suture_duration_s"
+    pair = participant[[first, second]].dropna()
+    correlation = stats.pearsonr(pair[first], pair[second])
+    correlation_rows = [
+        {
+            "comparison": "Post-training transfer outcomes",
+            "variable_1": first,
+            "variable_2": second,
+            "pearson_r": correlation.statistic,
+            "p_value": correlation.pvalue,
+            "n": len(pair),
+        }
+    ]
+
     return {
-        "primary": pd.concat(primary, ignore_index=True),
+        "primary": primary_table,
         "standardized": pd.concat(standardized, ignore_index=True),
         "sensitivity": pd.concat(sensitivity, ignore_index=True),
         "baseline_adjusted": pd.concat(baseline_adjusted, ignore_index=True),
+        "baseline_coordination_adjusted": pd.concat(
+            baseline_coordination_adjusted, ignore_index=True
+        ),
+        "measurement_correlations": pd.DataFrame(correlation_rows),
     }
 
 
@@ -614,6 +678,7 @@ def fit_random_intercept_ml(
     beta, log_likelihood, covariance_beta = beta_and_loglik(optimization.x)
     return {
         "beta": beta,
+        "covariance_beta": covariance_beta,
         "se": np.sqrt(np.maximum(np.diag(covariance_beta), 0)),
         "loglik": log_likelihood,
         "rank": int(np.linalg.matrix_rank(design)),
@@ -684,6 +749,323 @@ def run_longitudinal_models(
                     }
                 )
     return pd.DataFrame(rows)
+
+
+def longitudinal_design_row(
+    stage: str,
+    group: str,
+    occasion: str,
+    include_group: bool,
+    include_occasion: bool,
+    include_interaction: bool,
+) -> np.ndarray:
+    """Build one fixed-effect design row matching ``build_longitudinal_design``."""
+    if group not in GROUP_LABELS:
+        raise ValueError(f"Unexpected group: {group}")
+    if occasion not in OCCASION_ORDER[stage]:
+        raise ValueError(f"Unexpected {stage} occasion: {occasion}")
+    group_value = float(group == "workload_adapted")
+    occasion_values = np.array(
+        [float(occasion == level) for level in OCCASION_ORDER[stage][1:]],
+        dtype=float,
+    )
+    values = [1.0]
+    if include_group:
+        values.append(group_value)
+    if include_occasion:
+        values.extend(occasion_values)
+    if include_interaction:
+        values.extend(group_value * occasion_values)
+    return np.asarray(values, dtype=float)
+
+
+def holm_adjust(p_values: list[float]) -> np.ndarray:
+    """Holm-adjust a finite family of two-sided P values."""
+    values = np.asarray(p_values, dtype=float)
+    adjusted = np.full(values.shape, np.nan, dtype=float)
+    finite = np.where(np.isfinite(values))[0]
+    if not len(finite):
+        return adjusted
+    order = finite[np.argsort(values[finite])]
+    running = 0.0
+    family_size = len(order)
+    for rank, index in enumerate(order):
+        running = max(running, (family_size - rank) * values[index])
+        adjusted[index] = min(1.0, running)
+    return adjusted
+
+
+def wald_contrast(
+    fit: dict[str, float | int | bool | np.ndarray], contrast: np.ndarray
+) -> dict[str, float]:
+    """Return a fixed-effect estimate, Wald interval, and two-sided P value."""
+    beta = np.asarray(fit["beta"], dtype=float)
+    covariance = np.asarray(fit["covariance_beta"], dtype=float)
+    contrast = np.asarray(contrast, dtype=float)
+    estimate = float(contrast @ beta)
+    variance = max(float(contrast @ covariance @ contrast), 0.0)
+    standard_error = math.sqrt(variance)
+    if standard_error > 0:
+        z_value = estimate / standard_error
+        p_value = float(2 * stats.norm.sf(abs(z_value)))
+    else:
+        z_value = np.nan
+        p_value = np.nan
+    critical = stats.norm.ppf(0.975)
+    return {
+        "estimate": estimate,
+        "standard_error": standard_error,
+        "ci95_low": estimate - critical * standard_error,
+        "ci95_high": estimate + critical * standard_error,
+        "z_value": z_value,
+        "p_value": p_value,
+    }
+
+
+def wald_joint_test(
+    fit: dict[str, float | int | bool | np.ndarray], contrasts: np.ndarray
+) -> dict[str, float | int]:
+    """Joint Wald test for a set of fixed-effect contrasts."""
+    beta = np.asarray(fit["beta"], dtype=float)
+    covariance = np.asarray(fit["covariance_beta"], dtype=float)
+    contrasts = np.asarray(contrasts, dtype=float)
+    estimates = contrasts @ beta
+    contrast_covariance = contrasts @ covariance @ contrasts.T
+    df = int(np.linalg.matrix_rank(contrasts))
+    statistic = float(estimates @ np.linalg.pinv(contrast_covariance) @ estimates)
+    return {
+        "chi_square": statistic,
+        "df": df,
+        "p_value": float(stats.chi2.sf(statistic, df)),
+    }
+
+
+def _fit_followup_model(
+    data: pd.DataFrame, stage: str, metric: str, model: str
+) -> dict[str, float | int | bool | np.ndarray]:
+    subset = data[data["stage"] == stage].copy()
+    model_terms = {
+        "main": (True, True, False),
+        "full": (True, True, True),
+    }
+    if model not in model_terms:
+        raise ValueError(f"Unexpected follow-up model: {model}")
+    include_group, include_occasion, include_interaction = model_terms[model]
+    design = build_longitudinal_design(
+        subset,
+        stage,
+        include_group=include_group,
+        include_occasion=include_occasion,
+        include_interaction=include_interaction,
+    )
+    return fit_random_intercept_ml(
+        subset[metric].to_numpy(float),
+        design,
+        subset["participant_id"].to_numpy(str),
+    )
+
+
+def _marginal_design_row(stage: str, occasion: str) -> np.ndarray:
+    rows = [
+        longitudinal_design_row(stage, group, occasion, True, True, False)
+        for group in GROUP_LABELS
+    ]
+    return np.mean(rows, axis=0)
+
+
+def run_longitudinal_followups(data: pd.DataFrame) -> dict[str, pd.DataFrame]:
+    """Estimate prespecified means and contrasts needed to interpret omnibus tests."""
+    transfer_emm_rows = []
+    transfer_contrast_rows = []
+    transfer_pairs = [
+        ("immediate_day3", "baseline"),
+        ("delayed_day7", "baseline"),
+        ("delayed_day7", "immediate_day3"),
+    ]
+    for metric in COORDINATION_VARS:
+        fit = _fit_followup_model(data, "transfer", metric, "main")
+        vectors = {
+            occasion: _marginal_design_row("transfer", occasion)
+            for occasion in TRANSFER_OCCASIONS
+        }
+        for occasion, vector in vectors.items():
+            result = wald_contrast(fit, vector)
+            transfer_emm_rows.append(
+                {
+                    "metric": metric,
+                    "metric_label": METRIC_LABELS[metric],
+                    "occasion": occasion,
+                    "occasion_label": OCCASION_LABELS[occasion],
+                    **result,
+                    "n_observations": int(fit["n"]),
+                    "n_participants": int(fit["n_participants"]),
+                }
+            )
+        family_rows = []
+        for later, earlier in transfer_pairs:
+            result = wald_contrast(fit, vectors[later] - vectors[earlier])
+            family_rows.append(
+                {
+                    "metric": metric,
+                    "metric_label": METRIC_LABELS[metric],
+                    "later_occasion": later,
+                    "earlier_occasion": earlier,
+                    "comparison": (
+                        f"{OCCASION_LABELS[later]} minus {OCCASION_LABELS[earlier]}"
+                    ),
+                    **result,
+                }
+            )
+        adjusted = holm_adjust([row["p_value"] for row in family_rows])
+        for row, p_adjusted in zip(family_rows, adjusted):
+            row["p_value_holm"] = p_adjusted
+            row["adjustment_family"] = "Three transfer-test comparisons within metric"
+            transfer_contrast_rows.append(row)
+
+    count_fit = _fit_followup_model(data, "training", "lt_rn_count", "full")
+    count_vectors = {
+        (group, occasion): longitudinal_design_row(
+            "training", group, occasion, True, True, True
+        )
+        for group in GROUP_LABELS
+        for occasion in TRAINING_OCCASIONS
+    }
+    count_emm_rows = []
+    for (group, occasion), vector in count_vectors.items():
+        result = wald_contrast(count_fit, vector)
+        count_emm_rows.append(
+            {
+                "group": group,
+                "group_label": GROUP_LABELS[group],
+                "occasion": occasion,
+                "occasion_label": OCCASION_LABELS[occasion],
+                **result,
+            }
+        )
+
+    count_simple_effect_rows = []
+    first_session = TRAINING_OCCASIONS[0]
+    for group in GROUP_LABELS:
+        contrasts = np.vstack(
+            [
+                count_vectors[(group, occasion)]
+                - count_vectors[(group, first_session)]
+                for occasion in TRAINING_OCCASIONS[1:]
+            ]
+        )
+        result = wald_joint_test(count_fit, contrasts)
+        count_simple_effect_rows.append(
+            {
+                "group": group,
+                "group_label": GROUP_LABELS[group],
+                "effect": "Session within group",
+                **result,
+            }
+        )
+
+    count_group_contrast_rows = []
+    for occasion in TRAINING_OCCASIONS:
+        result = wald_contrast(
+            count_fit,
+            count_vectors[("workload_adapted", occasion)]
+            - count_vectors[("uniform", occasion)],
+        )
+        count_group_contrast_rows.append(
+            {
+                "occasion": occasion,
+                "occasion_label": OCCASION_LABELS[occasion],
+                "comparison": "Workload-adapted minus uniform difficulty",
+                **result,
+            }
+        )
+    adjusted = holm_adjust([row["p_value"] for row in count_group_contrast_rows])
+    for row, p_adjusted in zip(count_group_contrast_rows, adjusted):
+        row["p_value_holm"] = p_adjusted
+        row["adjustment_family"] = "Six session-specific group comparisons"
+
+    count_reference_rows = []
+    for group in GROUP_LABELS:
+        family_rows = []
+        for occasion in TRAINING_OCCASIONS[1:]:
+            result = wald_contrast(
+                count_fit,
+                count_vectors[(group, occasion)]
+                - count_vectors[(group, first_session)],
+            )
+            family_rows.append(
+                {
+                    "group": group,
+                    "group_label": GROUP_LABELS[group],
+                    "occasion": occasion,
+                    "occasion_label": OCCASION_LABELS[occasion],
+                    "comparison": (
+                        f"{OCCASION_LABELS[occasion]} minus "
+                        f"{OCCASION_LABELS[first_session]}"
+                    ),
+                    **result,
+                }
+            )
+        adjusted = holm_adjust([row["p_value"] for row in family_rows])
+        for row, p_adjusted in zip(family_rows, adjusted):
+            row["p_value_holm"] = p_adjusted
+            row["adjustment_family"] = "Five comparisons with first session within group"
+            count_reference_rows.append(row)
+
+    duration_fit = _fit_followup_model(data, "training", "lt_rn_duration_s", "main")
+    duration_vectors = {
+        occasion: _marginal_design_row("training", occasion)
+        for occasion in TRAINING_OCCASIONS
+    }
+    duration_emm_rows = []
+    for occasion, vector in duration_vectors.items():
+        result = wald_contrast(duration_fit, vector)
+        duration_emm_rows.append(
+            {
+                "occasion": occasion,
+                "occasion_label": OCCASION_LABELS[occasion],
+                **result,
+            }
+        )
+    duration_reference_rows = []
+    for occasion in TRAINING_OCCASIONS[1:]:
+        result = wald_contrast(
+            duration_fit,
+            duration_vectors[occasion] - duration_vectors[first_session],
+        )
+        duration_reference_rows.append(
+            {
+                "occasion": occasion,
+                "occasion_label": OCCASION_LABELS[occasion],
+                "comparison": (
+                    f"{OCCASION_LABELS[occasion]} minus "
+                    f"{OCCASION_LABELS[first_session]}"
+                ),
+                **result,
+            }
+        )
+    adjusted = holm_adjust([row["p_value"] for row in duration_reference_rows])
+    for row, p_adjusted in zip(duration_reference_rows, adjusted):
+        row["p_value_holm"] = p_adjusted
+        row["adjustment_family"] = "Five comparisons with first training session"
+
+    return {
+        "transfer_estimated_marginal_means": pd.DataFrame(transfer_emm_rows),
+        "transfer_pairwise_contrasts_holm": pd.DataFrame(transfer_contrast_rows),
+        "training_lt_rn_count_estimated_marginal_means": pd.DataFrame(count_emm_rows),
+        "training_lt_rn_count_simple_effects": pd.DataFrame(count_simple_effect_rows),
+        "training_lt_rn_count_group_contrasts_holm": pd.DataFrame(
+            count_group_contrast_rows
+        ),
+        "training_lt_rn_count_first_session_contrasts_holm": pd.DataFrame(
+            count_reference_rows
+        ),
+        "training_lt_rn_duration_estimated_marginal_means": pd.DataFrame(
+            duration_emm_rows
+        ),
+        "training_lt_rn_duration_first_session_contrasts_holm": pd.DataFrame(
+            duration_reference_rows
+        ),
+    }
 
 
 def term_row(table: pd.DataFrame, outcome: str, term: str) -> pd.Series:
@@ -757,6 +1139,9 @@ def build_publication_tables(
                     "B": f"{row['estimate']:.3f}",
                     "95% CI": ci_text(row["ci95_low"], row["ci95_high"]),
                     "p value": p_text(row["p_value"]),
+                    "Holm-adjusted p value": p_text(
+                        row["p_value_holm_primary_family"]
+                    ),
                     "Partial R2": f"{row['partial_r2']:.3f}",
                 }
             )
@@ -822,20 +1207,42 @@ def build_publication_tables(
         "sensitivity_analysis": sensitivity_table,
         "baseline_adjusted_sensitivity": baseline_adjusted_table,
         "data_completeness": completeness_summary,
+        "measurement_correlations": models["measurement_correlations"],
     }
     for name, table in tables.items():
-        table.to_csv(dirs.tables / f"{name}.csv", index=False)
-    models["primary"].to_csv(dirs.tables / "primary_associations_full_model.csv", index=False)
+        table.to_csv(
+            dirs.tables / f"{name}.csv", index=False, lineterminator="\n"
+        )
+    models["primary"].to_csv(
+        dirs.tables / "primary_associations_full_model.csv",
+        index=False,
+        lineterminator="\n",
+    )
     models["standardized"].to_csv(
-        dirs.tables / "primary_associations_standardized.csv", index=False
+        dirs.tables / "primary_associations_standardized.csv",
+        index=False,
+        lineterminator="\n",
     )
     models["sensitivity"].to_csv(
-        dirs.tables / "sensitivity_analysis_full_model.csv", index=False
+        dirs.tables / "sensitivity_analysis_full_model.csv",
+        index=False,
+        lineterminator="\n",
     )
     models["baseline_adjusted"].to_csv(
-        dirs.tables / "baseline_adjusted_sensitivity_full_model.csv", index=False
+        dirs.tables / "baseline_adjusted_sensitivity_full_model.csv",
+        index=False,
+        lineterminator="\n",
     )
-    longitudinal.to_csv(dirs.tables / "longitudinal_likelihood_ratio_tests.csv", index=False)
+    models["baseline_coordination_adjusted"].to_csv(
+        dirs.tables / "baseline_coordination_adjusted_full_model.csv",
+        index=False,
+        lineterminator="\n",
+    )
+    longitudinal.to_csv(
+        dirs.tables / "longitudinal_likelihood_ratio_tests.csv",
+        index=False,
+        lineterminator="\n",
+    )
     return tables
 
 
@@ -860,7 +1267,9 @@ def compute_diagnostics(
         vif_rows.append(
             {"predictor": predictor, "r2_from_other_predictors": r_squared, "vif": 1 / (1 - r_squared)}
         )
-    pd.DataFrame(vif_rows).to_csv(dirs.tables / "predictor_vif.csv", index=False)
+    pd.DataFrame(vif_rows).to_csv(
+        dirs.tables / "predictor_vif.csv", index=False, lineterminator="\n"
+    )
 
     diagnostic_rows = []
     for outcome in TRANSFER_OUTCOMES:
@@ -884,21 +1293,43 @@ def compute_diagnostics(
             }
         )
     pd.DataFrame(diagnostic_rows).to_csv(
-        dirs.tables / "regression_diagnostics.csv", index=False
+        dirs.tables / "regression_diagnostics.csv",
+        index=False,
+        lineterminator="\n",
     )
 
 
-def regression_line_with_ci(ax: plt.Axes, x: np.ndarray, y: np.ndarray) -> None:
-    mask = np.isfinite(x) & np.isfinite(y)
-    x = x[mask]
-    y = y[mask]
-    design = np.column_stack([np.ones(len(x)), x])
-    beta = np.linalg.lstsq(design, y, rcond=None)[0]
-    residual = y - design @ beta
-    df_resid = len(x) - 2
+def adjusted_regression_line_with_ci(
+    ax: plt.Axes,
+    frame: pd.DataFrame,
+    outcome: str,
+    focal_predictor: str,
+) -> pd.DataFrame:
+    predictors = [f"training_mean_{metric}" for metric in COORDINATION_VARS]
+    design, _ = design_matrix(frame, predictors, include_group=True)
+    response = frame[outcome].to_numpy(float)
+    mask = np.isfinite(response) & np.all(np.isfinite(design), axis=1)
+    design = design[mask]
+    response = response[mask]
+    work = frame.loc[mask]
+    beta = np.linalg.lstsq(design, response, rcond=None)[0]
+    residual = response - design @ beta
+    df_resid = len(response) - design.shape[1]
     mean_squared_error = float(residual @ residual / df_resid)
-    grid = np.linspace(np.min(x), np.max(x), 120)
-    grid_design = np.column_stack([np.ones_like(grid), grid])
+    grid = np.linspace(
+        work[focal_predictor].min(), work[focal_predictor].max(), 120
+    )
+    grid_columns = [np.ones_like(grid)]
+    for predictor in predictors:
+        if predictor == focal_predictor:
+            grid_columns.append(grid)
+        else:
+            grid_columns.append(
+                np.full_like(grid, work[predictor].mean(), dtype=float)
+            )
+    group_mean = (work["group"] == "workload_adapted").astype(float).mean()
+    grid_columns.append(np.full_like(grid, group_mean, dtype=float))
+    grid_design = np.column_stack(grid_columns)
     prediction = grid_design @ beta
     xtx_inverse = np.linalg.pinv(design.T @ design)
     standard_error = np.sqrt(
@@ -915,6 +1346,14 @@ def regression_line_with_ci(ax: plt.Axes, x: np.ndarray, y: np.ndarray) -> None:
         alpha=0.12,
         lw=0,
         zorder=1,
+    )
+    return pd.DataFrame(
+        {
+            focal_predictor: grid,
+            "adjusted_prediction": prediction,
+            "ci95_low": prediction - critical * standard_error,
+            "ci95_high": prediction + critical * standard_error,
+        }
     )
 
 
@@ -937,7 +1376,9 @@ def plot_adjusted_forest(
         "training_mean_rt_ln_duration_s": "RT-LN duration",
     }
     subset.assign(within_training_metric=subset["term"].map(label_map)).to_csv(
-        dirs.source_data / "Fig1_adjusted_associations.csv", index=False
+        dirs.source_data / "Fig1_adjusted_associations.csv",
+        index=False,
+        lineterminator="\n",
     )
 
     outcome_order = list(OUTCOME_LABELS.values())
@@ -1029,9 +1470,14 @@ def plot_transfer_scatter(
             panels[0][2],
             panels[1][2],
         ]
-    ].to_csv(dirs.source_data / "Fig2_LT_RN_transfer_associations.csv", index=False)
+    ].to_csv(
+        dirs.source_data / "Fig2_LT_RN_transfer_associations.csv",
+        index=False,
+        lineterminator="\n",
+    )
 
     fig, axes = plt.subplots(1, 2, figsize=(7.15, 2.95), constrained_layout=True)
+    adjusted_line_rows = []
     for ax, panel in zip(axes, panels):
         letter, title, y_column, outcome_label, y_label, decimals = panel
         for group, subset in participant.groupby("group"):
@@ -1046,16 +1492,20 @@ def plot_transfer_scatter(
                 label=GROUP_LABELS[group],
                 zorder=3,
             )
-        regression_line_with_ci(
+        adjusted_line = adjusted_regression_line_with_ci(
             ax,
-            participant[x_column].to_numpy(float),
-            participant[y_column].to_numpy(float),
+            participant,
+            y_column,
+            x_column,
         )
+        adjusted_line.insert(0, "outcome", outcome_label)
+        adjusted_line_rows.append(adjusted_line)
         row = term_row(primary, outcome_label, x_column)
         annotation = (
-            f"adjusted B={row['estimate']:.{decimals}f}\n"
+            f"Adjusted B = {row['estimate']:.{decimals}f}\n"
             f"95% CI {row['ci95_low']:.{decimals}f} to {row['ci95_high']:.{decimals}f}\n"
-            f"P={p_text(row['p_value'])}".replace("P=<", "P<")
+            f"P = {p_text(row['p_value'])}"
+            .replace("P = <", "P < ")
         )
         ax.text(
             0.03,
@@ -1090,6 +1540,11 @@ def plot_transfer_scatter(
         columnspacing=1.2,
         handlelength=1.5,
     )
+    pd.concat(adjusted_line_rows, ignore_index=True).to_csv(
+        dirs.source_data / "Fig2_adjusted_prediction_lines.csv",
+        index=False,
+        lineterminator="\n",
+    )
     save_figure(fig, dirs.figures / "Fig2_LT_RN_transfer_associations")
     plt.close(fig)
 
@@ -1110,7 +1565,9 @@ def plot_lt_rn_trajectory(
     subset = subset.sort_values(["group", "occasion"])
     figure_number = 3 if stage == "transfer" else 4
     subset.to_csv(
-        dirs.source_data / f"Fig{figure_number}_{stage}_LT_RN_count.csv", index=False
+        dirs.source_data / f"Fig{figure_number}_{stage}_LT_RN_count.csv",
+        index=False,
+        lineterminator="\n",
     )
 
     fig, ax = plt.subplots(figsize=(3.65, 2.65), constrained_layout=True)
@@ -1139,10 +1596,18 @@ def plot_lt_rn_trajectory(
     interaction = longitudinal_row(
         longitudinal, stage, "lt_rn_count", "Group x occasion"
     )
-    stat_text = (
-        f"occasion: χ²({int(occasion['df'])})={occasion['chi_square']:.2f}, "
-        f"P={p_text(occasion['p_value'])}; interaction: P={p_text(interaction['p_value'])}"
-    ).replace("P=<", "P<")
+    if stage == "training":
+        stat_text = (
+            f"group × session: χ²({int(interaction['df'])}) = "
+            f"{interaction['chi_square']:.2f}, P = {p_text(interaction['p_value'])}"
+        )
+    else:
+        stat_text = (
+            f"test occasion: χ²({int(occasion['df'])}) = {occasion['chi_square']:.2f}, "
+            f"P = {p_text(occasion['p_value'])}; group × test: "
+            f"P = {p_text(interaction['p_value'])}"
+        )
+    stat_text = stat_text.replace("P = <", "P < ")
     ax.text(
         0.02,
         0.96,
@@ -1158,7 +1623,7 @@ def plot_lt_rn_trajectory(
     ax.set_title(title, loc="left", fontweight="bold", color=NEUTRAL, pad=5)
     ax.set_xticks(x)
     ax.set_xticklabels([OCCASION_LABELS[value] for value in occasions])
-    ax.set_ylabel("Occurrences")
+    ax.set_ylabel("Event count")
     ax.margins(x=0.08, y=0.18)
     ax.legend(frameon=False, loc="lower left", handlelength=1.4)
     save_figure(fig, dirs.figures / f"Fig{figure_number}_{stage}_LT_RN_count")

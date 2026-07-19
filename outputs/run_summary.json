@@ -1,4 +1,5 @@
 {
+  "analysis_version": "1.2.0",
   "input": "analysis_input.csv",
   "rows": 197,
   "participants": 22,

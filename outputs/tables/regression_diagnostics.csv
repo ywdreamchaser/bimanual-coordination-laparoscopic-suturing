@@ -1,3 +1,3 @@
 model_outcome,shapiro_w,shapiro_p,maximum_absolute_standardized_residual,n,number_of_model_predictors_excluding_intercept
 Transfer suture-completion score,0.9084662829998212,0.0440538700673034,2.938071174224492,22,5
-Transfer mean active suture duration,0.9743099870022159,0.8081072958823077,2.0558126108165844,22,5
+Transfer mean active suture duration,0.9743099872699047,0.8081073016508309,2.0558126097877443,22,5

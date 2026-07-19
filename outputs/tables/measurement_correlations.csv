@@ -1,0 +1,2 @@
+comparison,variable_1,variable_2,pearson_r,p_value,n
+Post-training transfer outcomes,post_transfer_mean_suture_completion_score,post_transfer_mean_mean_active_suture_duration_s,-0.7639258760913478,3.508004973278803e-05,22

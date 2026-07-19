@@ -27,6 +27,9 @@ jobs:
       - name: Reproduce analyses and figures
         run: python run_analysis.py
 
+      - name: Report release version
+        run: python run_analysis.py --version
+
       - name: Verify analytic completeness
         shell: python
         run: |
@@ -35,6 +38,7 @@ jobs:
 
           summary = json.loads(Path("outputs/run_summary.json").read_text())
           expected = {
+              "analysis_version": "1.2.0",
               "rows": 197,
               "participants": 22,
               "training_rows_available": 131,
@@ -42,4 +46,31 @@ jobs:
           }
           for key, value in expected.items():
               assert summary[key] == value, (key, summary[key], value)
-          print("Analytic completeness checks passed.")
+          required = [
+              "outputs/source_data/Fig2_adjusted_prediction_lines.csv",
+              "outputs/tables/measurement_correlations.csv",
+              "outputs/tables/baseline_coordination_adjusted_full_model.csv",
+              "outputs/tables/transfer_estimated_marginal_means.csv",
+              "outputs/tables/transfer_pairwise_contrasts_holm.csv",
+              "outputs/tables/training_lt_rn_count_estimated_marginal_means.csv",
+              "outputs/tables/training_lt_rn_duration_estimated_marginal_means.csv",
+          ]
+          for artifact in required:
+              assert Path(artifact).is_file(), artifact
+          print("Reported-analysis artifact checks passed.")
+
+      - name: Verify TIFF encoding
+        shell: python
+        run: |
+          from pathlib import Path
+          from PIL import Image
+
+          tiffs = sorted(Path("outputs/figures").glob("*.tiff"))
+          assert len(tiffs) == 4, len(tiffs)
+          for path in tiffs:
+              with Image.open(path) as image:
+                  assert image.mode == "RGB", (path, image.mode)
+                  assert image.tag_v2.get(259) == 1, (path, image.tag_v2.get(259))
+                  assert float(image.tag_v2.get(282)) == 600.0, path
+                  assert float(image.tag_v2.get(283)) == 600.0, path
+          print("TIFF encoding checks passed.")

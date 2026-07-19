@@ -1,5 +1,21 @@
 # Changelog
 
+## 1.2.0 - 2026-07-18
+
+- Corrected transfer timing to immediate Day 3 and delayed Day 7 throughout
+  the public package.
+- Updated Figure 2 to use predictions from the mutually adjusted model and
+  added its adjusted prediction-line source data.
+- Added the current reported supplementary tables, longitudinal follow-up
+  estimates, contrasts, and multiplicity checks.
+- Cleared transfer-only outcome fields on training rows and enforced the
+  stage-specific data contract.
+- Narrowed reproducibility claims to the reported statistical analyses
+  implemented in this repository.
+- Added release-version reporting and regenerated outputs.
+- Changed TIFF output to uncompressed RGB at 600 dpi while preserving the
+  rendered RGB pixels.
+
 ## 1.1.0 - 2026-07-12
 
 - Added models adjusted for the corresponding baseline transfer outcome.
