@@ -130,8 +130,11 @@ and restricted source records.
 
 ## Public archive
 
-This directory is the release candidate for version 1.2.0. Version 1.1.0
-remains available as an immutable historical release at
+Version 1.2.0 is available at
+`https://github.com/ywdreamchaser/bimanual-coordination-laparoscopic-suturing/releases/tag/v1.2.0`
+and archived by Zenodo under the version-specific DOI
+`10.5281/zenodo.21435999`. Version 1.1.0 remains available as an immutable
+historical release at
 `https://github.com/ywdreamchaser/bimanual-coordination-laparoscopic-suturing/releases/tag/v1.1.0`
-and under Zenodo DOI `10.5281/zenodo.21328522`. The version-specific Zenodo DOI
-for 1.2.0 should be added to `CITATION.cff` only after Zenodo has minted it.
+and under Zenodo DOI `10.5281/zenodo.21328522`. The concept DOI
+`10.5281/zenodo.21316249` resolves to the latest archived version.
